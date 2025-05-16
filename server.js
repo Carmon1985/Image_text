@@ -45,6 +45,16 @@ app.post('/myqa/image/generate', async (req, res) => {
     console.log('ir-api.myqa.cc image API status:', response.status);
     console.log('ir-api.myqa.cc image API response:', data);
 
+    // --- Transform Gemini b64_json response for UI ---
+    if (data && Array.isArray(data.data) && data.data[0] && data.data[0].b64_json) {
+      res.status(200).json({
+        type: 'base64',
+        data: data.data[0].b64_json,
+        mimeType: 'image/png'
+      });
+      return;
+    }
+    // --- Otherwise, forward the original response ---
     res.status(response.status).json(data);
   } catch (err) {
     console.error('Proxy error in /myqa/image/generate:', err);

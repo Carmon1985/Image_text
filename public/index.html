@@ -537,6 +537,34 @@
             </div>
             <div id="imageResultsArea" class="results-area"></div>
         </div>
+
+        <div class="feature-section idea-verifier">
+            <div class="tool-matchmaker-header">
+                <div class="tool-matchmaker-icon" aria-hidden="true">
+                  <!-- Modern SVG magic wand icon -->
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="17" y="6" width="4" height="10" rx="2" fill="#a96bff"/>
+                    <rect x="17" y="22" width="4" height="10" rx="2" fill="#a96bff"/>
+                    <rect x="6" y="17" width="10" height="4" rx="2" fill="#a96bff"/>
+                    <rect x="22" y="17" width="10" height="4" rx="2" fill="#a96bff"/>
+                    <rect x="11.636" y="11.636" width="4" height="10" rx="2" transform="rotate(-45 11.636 11.636)" fill="#a96bff"/>
+                    <rect x="22.364" y="22.364" width="4" height="10" rx="2" transform="rotate(-45 22.364 22.364)" fill="#a96bff"/>
+                  </svg>
+                </div>
+                <h2>AI Idea Verifier</h2>
+                <div class="tool-matchmaker-subtitle">Describe your tool idea, and our AI will find existing tools that already fulfill the same purpose!</div>
+            </div>
+            <div class="form-group">
+                <label for="ideaVerifierInput">Describe your tool idea:</label>
+                <textarea id="ideaVerifierInput" placeholder="e.g., 'A tool that automatically summarizes meeting notes and emails them to participants.'"></textarea>
+            </div>
+            <button id="verifyIdeaButton" class="action-button tool-matchmaker-button">Verify My Idea with AI</button>
+            <div id="ideaVerifierLoadingIndicator" class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <p>AI is verifying your idea...</p>
+            </div>
+            <div id="ideaVerifierResultsArea" class="results-area"></div>
+        </div>
     </div>
 
     <script>
@@ -587,9 +615,15 @@
         const imageLoadingIndicator = document.getElementById('imageLoadingIndicator');
         const imageResultsArea = document.getElementById('imageResultsArea');
 
+        const ideaVerifierInput = document.getElementById('ideaVerifierInput');
+        const verifyIdeaButton = document.getElementById('verifyIdeaButton');
+        const ideaVerifierLoadingIndicator = document.getElementById('ideaVerifierLoadingIndicator');
+        const ideaVerifierResultsArea = document.getElementById('ideaVerifierResultsArea');
+
         // Event Listeners
         findToolsButton.addEventListener('click', handleFindTools);
         generateImageButton.addEventListener('click', handleImageTask);
+        verifyIdeaButton.addEventListener('click', handleVerifyIdea);
 
         if (toolTemperatureInput && toolTemperatureValue) {
             toolTemperatureInput.addEventListener('input', () => {
@@ -665,7 +699,7 @@
                     if (!response.ok) {
                         throw new Error(`MyQA Image Gen API (via Local Proxy) error: ${data.error || response.statusText}`);
                     }
-                    if (!data || (!data.image && !data.url && !data.images)) {
+                    if (!data || (!data.image && !data.url && !data.images && !(data.type === 'base64' && data.data))) {
                         throw new Error('MyQA Image Gen API (via Local Proxy) returned an unrecognized structure for image data.');
                     }
                     return data;
@@ -748,13 +782,13 @@
                 let systemPrompt, userPrompt, messages, maxTokens, toolMatchTemperature;
                 if (selectedModel === "qwen/qwen3-4b:free") {
                     // Fast path for Qwen
-                    systemPrompt = "Given the user's problem and the web search snippets, recommend 2–3 relevant AI tools. For each, give a name, a one-sentence reason, and a link. Output JSON only. If you cannot find any relevant tools, return an empty JSON array: [] or {\"recommendations\": []}. Do not ask for more information. Do not reply with explanations or questions. Only output JSON.";
+                    systemPrompt = "Given the user's problem and the web search snippets, recommend 2–3 relevant AI tools. For each, give a name, a one-sentence reason, and a link. Output JSON only. If you cannot find any relevant tools, return an empty JSON array: [] or {\"recommendations\": []}. Do not ask for more information. Do not reply with explanations or questions. Only output JSON. Only include tools that have a valid, accessible, official website or product page. Do not include tools with missing, placeholder, or inaccessible links. Always check that the link is real and working.";
                     userPrompt = `Problem: ${problemDescription}\n\nWeb Search Snippets:\n${webResults}`;
                     maxTokens = 250;
                     toolMatchTemperature = perplexityTemperature || 0.3;
                 } else {
                     // Default detailed prompt for other models
-                    systemPrompt = `You are an expert AI tool matchmaker. Given the user's problem and the web search results, recommend the best AI tools. For each tool, provide the name, a brief explanation, a link to the official website or product page, and the average user review score or a summary of user sentiment. Prioritize tools with the highest user reviews and best reputation, especially from well-known providers like Microsoft, Google, and Amazon, but do not exclude other options. Output a JSON array of tool objects with fields: name, explanation, link, and user_reviews. If you cannot find any relevant tools, return an empty JSON array: [] or {"recommendations": []}. Do not ask for more information. Do not reply with explanations or questions. Only output JSON.`;
+                    systemPrompt = `You are an expert AI tool matchmaker. Given the user's problem and the web search results, recommend the best AI tools. For each tool, provide the name, a brief explanation, a link to the official website or product page, and the average user review score or a summary of user sentiment. Prioritize tools with the highest user reviews and best reputation, especially from well-known providers like Microsoft, Google, and Amazon, but do not exclude other options. Output a JSON array of tool objects with fields: name, explanation, link, and user_reviews. If you cannot find any relevant tools, return an empty JSON array: [] or {"recommendations": []}. Do not ask for more information. Do not reply with explanations or questions. Only output JSON. Only include tools that have a valid, accessible, official website or product page. Do not include tools with missing, placeholder, or inaccessible links. Always check that the link is real and working.`;
                     userPrompt = `User Problem: ${problemDescription}\n\nWeb Search Results:\n${webResults}`;
                     maxTokens = 500;
                     toolMatchTemperature = perplexityTemperature;
@@ -975,6 +1009,193 @@
             } finally {
                 showLoading(false, imageLoadingIndicator, generateImageButton, "Generate");
             }
+        }
+
+        // --- Idea Verifier Logic ---
+        async function handleVerifyIdea() {
+            const ideaDescription = ideaVerifierInput.value.trim();
+            if (!ideaDescription) {
+                displayMessage('Please describe your tool idea.', 'error', ideaVerifierResultsArea);
+                return;
+            }
+            // Use the same model dropdown and temperature slider as Matchmaker
+            const selectedModel = toolLlmpModelSelect.value;
+            const temperature = parseFloat(toolTemperatureInput.value);
+            showLoading(true, ideaVerifierLoadingIndicator, verifyIdeaButton, "Enhancing your idea...");
+            ideaVerifierResultsArea.innerHTML = '';
+            try {
+                // 1. Enhance the idea for web search
+                const enhancePrompt = `You are an expert at crafting web search queries for new tool ideas. Rewrite the user's idea as a natural, full-sentence web search query that will help find existing tools or apps that already fulfill the same purpose. If helpful, add synonyms or related phrases, but keep the query natural and specific. Do not add explanations, just return the improved query.`;
+                const enhanceMessages = [
+                    { role: "system", content: enhancePrompt },
+                    { role: "user", content: ideaDescription }
+                ];
+                const enhancedIdea = await callChatCompletionsAPI_viaLocalProxy(OPENROUTER_CONFIG, selectedModel, enhanceMessages, "idea_verifier_enhance", temperature);
+                showLoading(true, ideaVerifierLoadingIndicator, verifyIdeaButton, "Searching for existing tools...");
+                const optimizedIdeaQuery = (enhancedIdea || '').replace(/^"|"$/g, '').trim();
+
+                // 2. Use Perplexity to get relevant answer/snippets (use enhanced idea)
+                const perplexityUrl = '/myqa/perplexity/search';
+                const perplexityPayload = {
+                    model: "default",
+                    messages: [
+                        { role: "system", content: "You are a helpful assistant. Provide a clear, concise, and descriptive list of the best AI tools for the user's query. For each tool, include a brief but informative description, practical details, and cite sources if possible. Avoid being too brief or too long—aim for helpful, actionable information." },
+                        { role: "user", content: optimizedIdeaQuery }
+                    ],
+                    stream: false
+                };
+                const perplexityResponse = await fetch(perplexityUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(perplexityPayload)
+                }).then(r => r.json());
+                showLoading(true, ideaVerifierLoadingIndicator, verifyIdeaButton, "Matching existing tools for you...");
+
+                // 3. Parse Perplexity response for SEARCH_SNIPPETS
+                const searchSnippets = perplexityResponse.SEARCH_SNIPPETS || [];
+                let webResults = searchSnippets.map(snippet => snippet.text).join("\n\n");
+                if (!webResults.trim()) {
+                    webResults = "No relevant web search results were found. Please use your own knowledge or recommend the best general tools for this idea.";
+                }
+
+                // 4. Prepare tool matching prompt (different prompt for verifier)
+                const systemPrompt = `You are an expert at evaluating new tool ideas. Given the user's idea and the web search results, list existing tools that already fulfill the same purpose. For each, provide the name, a brief explanation, and a link. Output JSON only. If no tools are found, return an empty array. Do not ask for more information. Do not reply with explanations or questions. Only output JSON. Only include tools that have a valid, accessible, official website or product page. Do not include tools with missing, placeholder, or inaccessible links. Always check that the link is real and working.`;
+                const userPrompt = `User Idea: ${ideaDescription}\n\nWeb Search Results:\n${webResults}`;
+                const messages = [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ];
+                let llmResponseContent = '';
+                try {
+                    llmResponseContent = await callChatCompletionsAPI_viaLocalProxy(
+                        OPENROUTER_CONFIG,
+                        selectedModel,
+                        messages,
+                        "idea_verifier_match",
+                        temperature,
+                        500
+                    );
+                    console.log('Raw LLM response (Idea Verifier):', llmResponseContent);
+                } catch (err) {
+                    console.error('Error from LLM proxy (Idea Verifier):', err);
+                    displayMessage('There was an error contacting the LLM service. Please try again later.', 'error', ideaVerifierResultsArea);
+                    showLoading(false, ideaVerifierLoadingIndicator, verifyIdeaButton, "Verify My Idea with AI");
+                    return;
+                }
+                // Try to parse JSON, fallback to user-friendly error if not valid
+                let toolSuggestions = null;
+                let cleanJsonResponse = llmResponseContent.trim();
+                // Remove Markdown code block if present
+                if (cleanJsonResponse.startsWith('```json')) {
+                    cleanJsonResponse = cleanJsonResponse.slice(7).trim();
+                    if (cleanJsonResponse.endsWith('```')) {
+                        cleanJsonResponse = cleanJsonResponse.slice(0, -3).trim();
+                    }
+                } else if (cleanJsonResponse.startsWith('```')) {
+                    cleanJsonResponse = cleanJsonResponse.slice(3).trim();
+                    if (cleanJsonResponse.endsWith('```')) {
+                        cleanJsonResponse = cleanJsonResponse.slice(0, -3).trim();
+                    }
+                }
+                try {
+                    toolSuggestions = JSON.parse(cleanJsonResponse);
+                } catch (err) {
+                    displayMessage('The model did not return results in the expected format. Try a different query or model.', 'error', ideaVerifierResultsArea);
+                    console.error('Malformed LLM response (not JSON):', llmResponseContent);
+                    showLoading(false, ideaVerifierLoadingIndicator, verifyIdeaButton, "Verify My Idea with AI");
+                    return;
+                }
+                // --- Transparency UI ---
+                let transparencyHtml = `
+                  <div class="collapsible-panel collapsed" id="ideaVerifierDebugCollapsiblePanel">
+                    <div class="collapsible-header" id="ideaVerifierDebugCollapsibleHeader" tabindex="0" role="button" aria-expanded="false" aria-controls="ideaVerifierDebugCollapsibleContent">
+                      <span class="collapsible-chevron">&#9654;</span>
+                      How Your Idea Was Verified
+                    </div>
+                    <div class="collapsible-content" id="ideaVerifierDebugCollapsibleContent">
+                      <div class='debug-panel' style="margin-bottom:0; box-shadow:none; border:none; background:none;">
+                        <div class='debug-section'><b>1. Your Idea:</b><br><span>${ideaDescription}</span></div>
+                        <div class='debug-section'><b>2. Enhanced Web Search Prompt Sent to Perplexity:</b><br><pre style='white-space:pre-wrap;'>${optimizedIdeaQuery}</pre></div>
+                        <div class='debug-section'><b>3. Web Search Result (Perplexity):</b>
+                          <pre style='white-space:pre-wrap;'>${webResults}</pre>
+                        </div>
+                        <div class='debug-section'><b>4. System Prompt Sent to LLM:</b>
+                          <pre style='white-space:pre-wrap;'>${systemPrompt}</pre>
+                        </div>
+                        <div class='debug-section'><b>5. Raw LLM Response:</b>
+                          <pre style='white-space:pre-wrap;'>${llmResponseContent}</pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                ideaVerifierResultsArea.innerHTML = transparencyHtml;
+                // Add JS for collapsible
+                setTimeout(() => {
+                  const panel = document.getElementById('ideaVerifierDebugCollapsiblePanel');
+                  const header = document.getElementById('ideaVerifierDebugCollapsibleHeader');
+                  const content = document.getElementById('ideaVerifierDebugCollapsibleContent');
+                  if (panel && header && content) {
+                    header.addEventListener('click', () => {
+                      const expanded = panel.classList.toggle('expanded');
+                      panel.classList.toggle('collapsed', !expanded);
+                      header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    });
+                    header.addEventListener('keydown', (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        header.click();
+                      }
+                    });
+                  }
+                }, 0);
+                // --- Handle both array and {recommendations:[]} ---
+                let suggestionsArray = [];
+                if (Array.isArray(toolSuggestions)) {
+                    suggestionsArray = toolSuggestions;
+                } else if (
+                    toolSuggestions &&
+                    typeof toolSuggestions === 'object' &&
+                    Array.isArray(toolSuggestions.recommendations)
+                ) {
+                    suggestionsArray = toolSuggestions.recommendations;
+                }
+                // Display results
+                displayIdeaVerifierResults(suggestionsArray);
+            } catch (error) {
+                console.error('Error verifying idea (via proxy):', error);
+                displayMessage(`Error verifying idea: ${error.message}`, 'error', ideaVerifierResultsArea);
+            } finally {
+                showLoading(false, ideaVerifierLoadingIndicator, verifyIdeaButton, "Verify My Idea with AI");
+            }
+        }
+
+        function displayIdeaVerifierResults(suggestions) {
+            // Do not clear ideaVerifierResultsArea; append results below the debug/process panel
+            // Remove any previous results container
+            const oldResults = ideaVerifierResultsArea.querySelector('.tool-results-container');
+            if (oldResults) oldResults.remove();
+            if (!suggestions || suggestions.length === 0) {
+                displayMessage('AI could not find existing tools that match your idea, or the response was empty. Try rephrasing or check if the LLM is working.', 'info', ideaVerifierResultsArea);
+                return;
+            }
+            const resultsContainer = document.createElement('div');
+            resultsContainer.classList.add('tool-results-container');
+            const title = document.createElement('h3');
+            title.classList.add('results-title');
+            title.textContent = 'Existing Tools Matching Your Idea:';
+            resultsContainer.appendChild(title);
+            suggestions.forEach(tool => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('tool-item');
+                itemDiv.innerHTML = `
+                    <h3>${tool.name}</h3>
+                    <p><strong>Explanation:</strong> ${tool.reason || tool.explanation || tool.description || '<em>No explanation provided by the AI. This may be due to incomplete LLM output.</em>'}</p>
+                    <a href="${tool.link}" class="tool-link" target="_blank" rel="noopener noreferrer">Visit Tool</a>
+                `;
+                resultsContainer.appendChild(itemDiv);
+            });
+            ideaVerifierResultsArea.appendChild(resultsContainer);
         }
 
         // --- UI Update Functions ---
