@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant: Tool Matchmaker & Image Generator</title>
+    <style>
+        /* Modern Dark Theme & Gradient Styles */
+        :root {
+            --primary-color: #ff3c7e;
+            --primary-hover-color: #e02e6d;
+            --secondary-color: #b0b3b8;
+            --tertiary-color: #17a2b8;
+            --tertiary-hover-color: #117a8b;
+            --background-gradient: #23262f;
+            --card-gradient: linear-gradient(135deg, #23262f 0%, #20222a 100%);
+            --card-background-color: rgba(35, 38, 47, 0.97);
+            --text-color: #f3f4f8;
+            --border-color: #23262f;
+            --error-color: #ff4d6d;
+            --success-color: #28a745;
+            --font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            --border-radius: 1.1rem;
+            --box-shadow: 0 4px 32px rgba(0,0,0,0.18), 0 1.5px 4px rgba(0,0,0,0.12);
+            --glass-bg: rgba(35, 38, 47, 0.78);
+            --glass-blur: blur(8px);
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--background-gradient);
+            color: var(--text-color);
+            margin: 0;
+            padding: 32px 0 32px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.7;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 820px;
+        }
+
+        .config-section,
+        .feature-section {
+            background: var(--card-gradient);
+            background-color: var(--card-background-color);
+            padding: 32px 28px 28px 28px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 32px;
+            border: 1.5px solid var(--border-color);
+            position: relative;
+        }
+
+        .config-section h2,
+        .feature-section h2 {
+            text-align: center;
+            font-size: 2.1em;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            margin-top: 0;
+            margin-bottom: 24px;
+            background: linear-gradient(90deg, #ff3c7e 0%, #a96bff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .feature-section.image-generator h2 {
+            background: linear-gradient(90deg, #17a2b8 0%, #ff3c7e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #b0b3b8;
+            letter-spacing: 0.01em;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 0.7rem;
+            font-size: 1.08rem;
+            background: rgba(36, 37, 50, 0.7);
+            color: var(--text-color);
+            box-sizing: border-box;
+            transition: border 0.2s, box-shadow 0.2s;
+            outline: none;
+            margin-top: 2px;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(255,60,126,0.12);
+        }
+        .form-group textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .api-key-note {
+            font-size: 0.92em;
+            color: #a0a3b8;
+            margin-top: 5px;
+        }
+        .api-key-note a {
+            color: var(--primary-color);
+        }
+        .important-note {
+            background: linear-gradient(90deg, #23243a 0%, #181824 100%);
+            color: #ffe6f2;
+            padding: 13px 18px;
+            border: 1.5px solid #3a3b4d;
+            border-radius: var(--border-radius);
+            margin-bottom:18px;
+            font-size: 1em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .action-button {
+            color: #fff;
+            padding: 14px 0;
+            border: none;
+            border-radius: 0.7rem;
+            cursor: pointer;
+            font-size: 1.13rem;
+            font-weight: 700;
+            transition: background 0.18s, box-shadow 0.18s;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 2px 12px rgba(255,60,126,0.08);
+            letter-spacing: 0.01em;
+        }
+        .tool-matchmaker-button,
+        .image-generator-button {
+            background: linear-gradient(90deg, #23262f 0%, #2d2f38 60%, #393b44 100%);
+            /* subtle graphite gradient: deep gray to slightly lighter graphite */
+            box-shadow: 0 2px 8px rgba(40,44,60,0.13);
+        }
+        .tool-matchmaker-button:hover:not(:disabled),
+        .image-generator-button:hover:not(:disabled) {
+            background: linear-gradient(90deg, #2d2f38 0%, #393b44 60%, #4a4d56 100%);
+            /* slightly lighter graphite on hover, still subtle */
+            box-shadow: 0 4px 16px rgba(60,70,90,0.15);
+        }
+        .action-button:disabled {
+            background: #393a4a;
+            cursor: not-allowed;
+            color: #aaa;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            margin: 22px 0;
+            font-style: italic;
+            color: #b0b3b8;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.08);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s ease infinite;
+            margin: 10px auto;
+        }
+        .image-generator .spinner {
+            border-left-color: var(--tertiary-color);
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-area {
+            margin-top: 28px;
+            word-break: break-word;
+        }
+        .results-area img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 1rem;
+            margin-top: 10px;
+            border: 2px solid #2c2e3e;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.22);
+        }
+
+        .results-title {
+            font-size: 1.35em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #2c2e3e;
+            padding-bottom: 10px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ff3c7e 0%, #a96bff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tool-matchmaker .results-title { background: linear-gradient(90deg, #ff3c7e 0%, #a96bff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .image-generator .results-title { background: linear-gradient(90deg, #17a2b8 0%, #ff3c7e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        .tool-item {
+            background: rgba(36, 37, 50, 0.85);
+            border: 1.5px solid #2c2e3e;
+            border-radius: 1rem;
+            padding: 18px 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+            transition: box-shadow 0.18s, border 0.18s, transform 0.18s;
+        }
+        .tool-item:hover {
+            box-shadow: 0 6px 32px rgba(255,60,126,0.10), 0 2px 8px rgba(0,0,0,0.18);
+            border-color: var(--primary-color);
+            transform: translateY(-2px) scale(1.012);
+        }
+        .tool-item h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.13em;
+        }
+        .tool-item p, .image-idea-item p {
+            margin-bottom: 10px;
+            font-size: 1em;
+            color: #b0b3b8;
+        }
+        .tool-item .tool-link {
+            display: inline-block;
+            background: linear-gradient(90deg, #ff3c7e 0%, #a96bff 100%);
+            color: #fff;
+            padding: 9px 18px;
+            text-decoration: none;
+            border-radius: 0.7rem;
+            font-size: 1em;
+            font-weight: 700;
+            transition: background 0.18s, box-shadow 0.18s;
+            box-shadow: 0 2px 8px rgba(255,60,126,0.10);
+        }
+        .tool-item .tool-link:hover {
+            background: linear-gradient(90deg, #e02e6d 0%, #7c4dff 100%);
+        }
+
+        .image-idea-item ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        .image-idea-item li {
+            margin-bottom: 8px;
+            color: #f3f4f8;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 0.7rem;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .error-message {
+            background: linear-gradient(90deg, #2c2e3e 0%, #ff4d6d 100%);
+            color: #fff;
+            border: 1.5px solid #ff4d6d;
+        }
+        .info-message {
+            background: linear-gradient(90deg, #23243a 0%, #181824 100%);
+            color: #b0b3b8;
+            border: 1.5px solid #3a3b4d;
+        }
+
+        @media (max-width: 600px) {
+            .config-section, .feature-section { padding: 14px 6px; }
+            .config-section h2, .feature-section h2 { font-size: 1.3em; }
+        }
+
+        .debug-panel {
+            background: var(--glass-bg);
+            border: 2px solid var(--primary-color);
+            border-radius: 1.1rem;
+            margin-bottom: 24px;
+            padding: 18px 20px;
+            font-size: 1.04em;
+            box-shadow: 0 2px 16px rgba(255,60,126,0.08);
+            backdrop-filter: var(--glass-blur);
+            color: var(--text-color);
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        .debug-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-weight: 800;
+        }
+        .debug-panel a {
+            color: #8ea0b7;
+            text-decoration: underline;
+            transition: color 0.18s;
+        }
+        .debug-panel a:hover {
+            color: #b0b3b8;
+            text-decoration: underline;
+        }
+        .debug-section {
+            margin-bottom: 14px;
+        }
+        .debug-section pre {
+            margin: 0;
+            background: #23262f;
+            border-radius: 0.7rem;
+            padding: 12px 14px;
+            color: #f3f4f8;
+            font-size: 1em;
+            box-shadow: 0 1.5px 6px rgba(0,0,0,0.10);
+            border: none;
+            overflow-x: auto;
+            max-width: 100%;
+            word-break: break-word;
+        }
+        .image-result-container {
+            margin-top: 28px;
+            margin-bottom: 14px;
+        }
+
+        /* Collapsible Debug Panel */
+        .collapsible-panel {
+            margin-bottom: 24px;
+            border-radius: 1.1rem;
+            overflow: hidden;
+            box-shadow: 0 2px 16px rgba(255,60,126,0.08);
+            background: none;
+        }
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            background: var(--glass-bg);
+            border-radius: 1.1rem 1.1rem 0 0;
+            padding: 0 16px;
+            min-height: 42px;
+            font-size: 1.05em;
+            font-weight: 500;
+            color: #f3f4f8;
+            user-select: none;
+            transition: background 0.18s;
+        }
+        .collapsible-header:focus {
+            outline: 2px solid var(--primary-color);
+        }
+        .collapsible-chevron {
+            margin-right: 10px;
+            font-size: 1.15em;
+            color: #b0b3b8;
+            transition: transform 0.25s cubic-bezier(.4,2,.6,1), color 0.18s;
+        }
+        .collapsible-panel.collapsed .collapsible-chevron {
+            transform: rotate(-90deg);
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            background: var(--glass-bg);
+            border: 1px solid var(--primary-color);
+            border-top: none;
+            border-radius: 0 0 1.1rem 1.1rem;
+            transition: max-height 0.35s cubic-bezier(.4,2,.6,1), padding 0.2s;
+            padding: 0 20px 0 20px;
+        }
+        .collapsible-panel.expanded .collapsible-content {
+            max-height: 420px;
+            overflow-y: auto;
+            padding: 18px 20px 28px 20px;
+        }
+        .collapsible-panel.collapsed .collapsible-content {
+            padding: 0 20px;
+        }
+
+        .tool-matchmaker-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 36px;
+        }
+        .tool-matchmaker-icon {
+            width: 38px;
+            height: 38px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tool-matchmaker-header h2 {
+            background: none !important;
+            -webkit-background-clip: unset !important;
+            -webkit-text-fill-color: unset !important;
+            background-clip: unset !important;
+            color: #f3f4f8;
+            font-size: 1.45em;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+            text-align: center;
+            letter-spacing: 0.01em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tool-matchmaker-subtitle {
+            color: #b0b3b8;
+            font-size: 1em;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        /* Modern dropdown styling for model selectors */
+        .form-group select.model-select {
+            font-size: 1.08rem;
+            background: rgba(36, 37, 50, 0.7);
+            color: var(--text-color);
+            border: 1.5px solid var(--border-color);
+            border-radius: 0.7rem;
+            padding: 13px 14px;
+            margin-top: 2px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-group select.model-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(255,60,126,0.12);
+        }
+        .form-group .temperature-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            color: #b0b3b8;
+            font-size: 0.98em;
+        }
+        .form-group input[type=range].temperature-slider {
+            width: 100%;
+            margin: 0;
+        }
+        .form-group .temperature-value {
+            margin-left: 10px;
+            color: #f3f4f8;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="feature-section tool-matchmaker">
+            <div class="tool-matchmaker-header">
+                <div class="tool-matchmaker-icon" aria-hidden="true">
+                  <!-- Modern SVG magic wand icon -->
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="17" y="6" width="4" height="10" rx="2" fill="#ff3c7e"/>
+                    <rect x="17" y="22" width="4" height="10" rx="2" fill="#ff3c7e"/>
+                    <rect x="6" y="17" width="10" height="4" rx="2" fill="#ff3c7e"/>
+                    <rect x="22" y="17" width="10" height="4" rx="2" fill="#ff3c7e"/>
+                    <rect x="11.636" y="11.636" width="4" height="10" rx="2" transform="rotate(-45 11.636 11.636)" fill="#ff3c7e"/>
+                    <rect x="22.364" y="22.364" width="4" height="10" rx="2" transform="rotate(-45 22.364 22.364)" fill="#ff3c7e"/>
+                  </svg>
+                </div>
+                <h2>AI Tool Matchmaker</h2>
+                <div class="tool-matchmaker-subtitle">Describe your problem or task, and our AI will suggest the best tools for the job!</div>
+            </div>
+            <div class="form-group">
+                <label for="toolLlmpModel">Select LLM Model for Tool Matching:</label>
+                <select id="toolLlmpModel" class="model-select"></select>
+            </div>
+            <div class="form-group">
+                <div class="temperature-label">
+                    <label for="toolTemperature">Temperature (creativity):</label>
+                    <span class="temperature-value" id="toolTemperatureValue">0.7</span>
+            </div>
+                <input type="range" min="0" max="1" step="0.01" value="0.7" id="toolTemperature" class="temperature-slider" />
+            </div>
+            <div class="form-group">
+                <label for="problemDescription">Describe your problem or task:</label>
+                <textarea id="problemDescription" placeholder="e.g., 'I need a tool to generate images for my blog posts'"></textarea>
+            </div>
+            <button id="findToolsButton" class="action-button tool-matchmaker-button">Find My Tools with AI</button>
+            <div id="toolLoadingIndicator" class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <p>AI is finding tools...</p>
+            </div>
+            <div id="toolResultsArea" class="results-area"></div>
+        </div>
+
+        <div class="feature-section image-generator">
+            <div class="tool-matchmaker-header">
+                <div class="tool-matchmaker-icon" aria-hidden="true">
+                  <!-- Modern SVG magic wand icon -->
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="17" y="6" width="4" height="10" rx="2" fill="#17a2b8"/>
+                    <rect x="17" y="22" width="4" height="10" rx="2" fill="#17a2b8"/>
+                    <rect x="6" y="17" width="10" height="4" rx="2" fill="#17a2b8"/>
+                    <rect x="22" y="17" width="10" height="4" rx="2" fill="#17a2b8"/>
+                    <rect x="11.636" y="11.636" width="4" height="10" rx="2" transform="rotate(-45 11.636 11.636)" fill="#17a2b8"/>
+                    <rect x="22.364" y="22.364" width="4" height="10" rx="2" transform="rotate(-45 22.364 22.364)" fill="#17a2b8"/>
+                  </svg>
+                </div>
+            <h2>AI Image Generator / Idea Helper</h2>
+                <div class="tool-matchmaker-subtitle">Describe your image idea or concept, and our AI will generate a beautiful image for you!</div>
+            </div>
+            <div class="form-group">
+                <label for="imageTaskProvider">Select Image Generation Model:</label>
+                <select id="imageTaskProvider" class="model-select"></select>
+            </div>
+            <div class="form-group">
+                <label for="imagePromptDescription">Enter your image prompt or concept:</label>
+                <textarea id="imagePromptDescription" placeholder="e.g., 'A futuristic city skyline at sunset' or 'cats playing poker'"></textarea>
+            </div>
+            <button id="generateImageButton" class="action-button image-generator-button">Generate</button>
+            <div id="imageLoadingIndicator" class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <p>AI is working...</p>
+            </div>
+            <div id="imageResultsArea" class="results-area"></div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript (script.js)
+
+        const FALLBACK_OPENROUTER_API_KEY = ''; // Not used, keys from input
+        const FALLBACK_MYQA_API_KEY = '';     // Not used, keys from input
+
+        // --- Local Proxy Configuration (YOU NEED TO SET UP THIS PROXY SERVER) ---
+        const LOCAL_PROXY_BASE_URL = 'http://localhost:3001'; // Example port for your local proxy
+
+        const OPENROUTER_CONFIG = {
+            name: "OpenRouter",
+            localProxyChatEndpoint: `${LOCAL_PROXY_BASE_URL}/openrouter/chat/completions`,
+            defaultChatModel: "mistralai/mistral-7b-instruct-v0.2",
+            getApiKey: () => '', // Always empty, proxy uses .env
+        };
+
+        const MYQA_CONFIG = {
+            name: "MyQA.cc",
+            localProxyChatEndpoint: `${LOCAL_PROXY_BASE_URL}/myqa/chat/completions`,
+            localProxyImageGenEndpoint: `${LOCAL_PROXY_BASE_URL}/myqa/image/generate`,
+            defaultChatModel: "stabilityai/sdxl-turbo:free",
+            imageGenModel: "stabilityai/sdxl-turbo:free",
+            getApiKey: () => '', // Always empty, proxy uses .env
+        };
+
+        const AIToolDatabase = [
+            { id: 'imgGen1', name: 'PixelDreamer AI', description: 'Generates high-quality images from text prompts. Good for blog posts, social media, artistic exploration.', keywords: ['image generation', 'text to image', 'art', 'graphics'], link: 'https://example.com/pixeldreamer' },
+            { id: 'writerAI', name: 'WordSmith AI Pro', description: 'AI writing assistant for articles, emails, marketing copy. Features grammar correction, tone adjustment.', keywords: ['writing', 'copywriting', 'content creation', 'text generation'], link: 'https://example.com/wordsmith' },
+            { id: 'codeBuddy', name: 'CodeGenius X', description: 'AI code assistant for writing, debugging, optimizing code. Supports multiple languages.', keywords: ['coding', 'programming', 'developer tool', 'software'], link: 'https://example.com/codegenius' }
+            // Add more tools here if needed
+        ];
+
+
+        // DOM Elements
+        const toolLlmpModelSelect = document.getElementById('toolLlmpModel');
+        const toolTemperatureInput = document.getElementById('toolTemperature');
+        const toolTemperatureValue = document.getElementById('toolTemperatureValue');
+        const problemDescriptionInput = document.getElementById('problemDescription');
+        const findToolsButton = document.getElementById('findToolsButton');
+        const toolLoadingIndicator = document.getElementById('toolLoadingIndicator');
+        const toolResultsArea = document.getElementById('toolResultsArea');
+
+        const imageTaskProviderSelect = document.getElementById('imageTaskProvider');
+        const imagePromptDescriptionInput = document.getElementById('imagePromptDescription');
+        const generateImageButton = document.getElementById('generateImageButton');
+        const imageLoadingIndicator = document.getElementById('imageLoadingIndicator');
+        const imageResultsArea = document.getElementById('imageResultsArea');
+
+        // Event Listeners
+        findToolsButton.addEventListener('click', handleFindTools);
+        generateImageButton.addEventListener('click', handleImageTask);
+
+        if (toolTemperatureInput && toolTemperatureValue) {
+            toolTemperatureInput.addEventListener('input', () => {
+                toolTemperatureValue.textContent = toolTemperatureInput.value;
+            });
+        }
+
+        // --- API Call Function for CHAT COMPLETIONS (via Local Proxy) ---
+        async function callChatCompletionsAPI_viaLocalProxy(providerConfig, modelIdentifier, messages, taskType = "unknown_chat", temperature = 0.7) {
+            // const apiKey = providerConfig.getApiKey(); // No longer needed
+            let endpoint;
+            if (providerConfig.name === "OpenRouter") {
+                endpoint = providerConfig.localProxyChatEndpoint;
+            } else if (providerConfig.name === "MyQA.cc") {
+                endpoint = providerConfig.localProxyChatEndpoint;
+            } else {
+                throw new Error("Unknown provider for chat completions via proxy.");
+            }
+
+            if (!endpoint) {
+                 throw new Error(`${providerConfig.name} does not have a configured local proxy chat endpoint.`);
+            }
+
+            const proxyRequestBody = {
+                // apiKey: apiKey, // Do not send apiKey
+                targetModel: modelIdentifier,
+                targetMessages: messages,
+                targetTemperature: temperature,
+                targetMax_tokens: taskType === "tool_matching" ? 500 : 300
+            };
+
+            console.log(`Calling Local Proxy for ${providerConfig.name} (Chat) at ${endpoint} with model ${modelIdentifier}`);
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(proxyRequestBody)
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                const errorMessage = data.error?.message || data.error || data.message || `Local proxy chat request to ${providerConfig.name} failed.`;
+                throw new Error(`${errorMessage} (Proxy Status: ${response.status})`);
+            }
+
+            if (!data.choices || data.choices.length === 0 || !data.choices[0].message || !data.choices[0].message.content) {
+                console.error("Unexpected chat response structure from local proxy:", data);
+                throw new Error(`Invalid response structure from ${providerConfig.name} Chat API (via local proxy).`);
+            }
+            return data.choices[0].message.content.trim();
+        }
+
+        // --- MyQA.cc IMAGE GENERATION API Call Function (via Local Proxy) ---
+        async function callMyQaImageGenerationAPI_viaLocalProxy(imagePrompt, imageModel, maxRetries = 3) {
+            // const apiKey = MYQA_CONFIG.getApiKey(); // No longer needed
+            const endpoint = MYQA_CONFIG.localProxyImageGenEndpoint;
+            const proxyRequestBody = {
+                // apiKey: apiKey, // Do not send apiKey
+                prompt: imagePrompt,
+                model: imageModel // Pass the selected model to the backend
+            };
+
+            let lastError = null;
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    console.log(`Calling Local Proxy for ${MYQA_CONFIG.name} (Image Gen) at ${endpoint} (attempt ${attempt})`);
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(proxyRequestBody)
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(`MyQA Image Gen API (via Local Proxy) error: ${data.error || response.statusText}`);
+                    }
+                    if (!data || (!data.image && !data.url && !data.images)) {
+                        throw new Error('MyQA Image Gen API (via Local Proxy) returned an unrecognized structure for image data.');
+                    }
+                    return data;
+                } catch (err) {
+                    lastError = err;
+                    console.warn(`Image generation attempt ${attempt} failed:`, err);
+                    if (attempt < maxRetries) {
+                        await new Promise(res => setTimeout(res, 500)); // short delay before retry
+                    }
+                }
+            }
+            throw lastError;
+        }
+
+        // --- Web Search Helper ---
+        async function callWebSearch(query){
+          const resp = await fetch(`${LOCAL_PROXY_BASE_URL}/search`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ query })
+          });
+          return await resp.json();
+        }
+
+        // --- Tool Matchmaker Logic ---
+        async function handleFindTools() {
+            const problemDescription = problemDescriptionInput.value.trim();
+            if (!problemDescription) {
+                displayMessage('Please describe your problem or task.', 'error', toolResultsArea);
+                return;
+            }
+
+            // Use Perplexity for web search
+            const selectedModel = toolLlmpModelSelect.value;
+            const perplexityTemperature = parseFloat(toolTemperatureInput.value);
+            showLoading(true, toolLoadingIndicator, findToolsButton, "Enhancing your query...");
+            toolResultsArea.innerHTML = '';
+
+            try {
+                // 1. Enhance the user query for Perplexity search using OpenRouter LLM
+                const enhancePrompt = `You are an expert at crafting web search queries. Rewrite the following user request as a concise, up-to-date, state-of-the-art web search query to find the best and newest AI tools or solutions online. Do NOT mention any years, dates, or knowledge cutoffs. Use phrases like 'new', 'best', or 'state-of-the-art' instead. Do not add explanations, just return the improved query.`;
+                const enhanceMessages = [
+                    { role: "system", content: enhancePrompt },
+                    { role: "user", content: problemDescription }
+                ];
+                const enhancedQuery = await callChatCompletionsAPI_viaLocalProxy(OPENROUTER_CONFIG, selectedModel, enhanceMessages, "web_search_optimize", perplexityTemperature);
+                showLoading(true, toolLoadingIndicator, findToolsButton, "Searching the web for tools...");
+                const optimizedWebSearchQuery = (enhancedQuery || '').replace(/^"|"$/g, '').trim();
+
+                // 2. Use Perplexity to get relevant answer/snippets (use enhanced prompt)
+                const perplexityUrl = '/myqa/perplexity/search';
+                const perplexityPayload = {
+                    model: "default",
+                    messages: [
+                        { role: "system", content: "You are a helpful assistant. Provide a clear, concise, and descriptive list of the best AI tools for the user's query. For each tool, include a brief but informative description, practical details, and cite sources if possible. Avoid being too brief or too long—aim for helpful, actionable information." },
+                        { role: "user", content: optimizedWebSearchQuery }
+                    ],
+                    stream: false
+                };
+                console.log('[Perplexity Fetch] URL:', perplexityUrl);
+                console.log('[Perplexity Fetch] Payload:', perplexityPayload);
+                const perplexityResponse = await fetch(perplexityUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(perplexityPayload)
+                }).then(r => r.json());
+
+                // Debug: log the raw Perplexity response
+                console.log('Raw Perplexity response:', perplexityResponse);
+                showLoading(true, toolLoadingIndicator, findToolsButton, "Matching the best tools for you...");
+
+                // 3. Parse Perplexity response for SEARCH_SNIPPETS
+                const searchSnippets = perplexityResponse.SEARCH_SNIPPETS || [];
+                let webResults = searchSnippets.map(snippet => snippet.text).join("\n\n");
+                if (!webResults.trim()) {
+                  webResults = "No relevant web search results were found. Please use your own knowledge or recommend the best general tools for this problem.";
+                }
+
+                // 4. Prepare tool matching prompt
+                let systemPrompt, userPrompt, messages, maxTokens, toolMatchTemperature;
+                if (selectedModel === "qwen/qwen3-4b:free") {
+                    // Fast path for Qwen
+                    systemPrompt = "Given the user's problem and the web search snippets, recommend 2–3 relevant AI tools. For each, give a name, a one-sentence reason, and a link. Output JSON only. If you cannot find any relevant tools, return an empty JSON array: [] or {\"recommendations\": []}. Do not ask for more information. Do not reply with explanations or questions. Only output JSON.";
+                    userPrompt = `Problem: ${problemDescription}\n\nWeb Search Snippets:\n${webResults}`;
+                    maxTokens = 250;
+                    toolMatchTemperature = perplexityTemperature || 0.3;
+                } else {
+                    // Default detailed prompt for other models
+                    systemPrompt = `You are an expert AI tool matchmaker. Given the user's problem and the web search results, recommend the best AI tools. For each tool, provide the name, a brief explanation, a link to the official website or product page, and the average user review score or a summary of user sentiment. Prioritize tools with the highest user reviews and best reputation, especially from well-known providers like Microsoft, Google, and Amazon, but do not exclude other options. Output a JSON array of tool objects with fields: name, explanation, link, and user_reviews. If you cannot find any relevant tools, return an empty JSON array: [] or {"recommendations": []}. Do not ask for more information. Do not reply with explanations or questions. Only output JSON.`;
+                    userPrompt = `User Problem: ${problemDescription}\n\nWeb Search Results:\n${webResults}`;
+                    maxTokens = 500;
+                    toolMatchTemperature = perplexityTemperature;
+                }
+                messages = [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ];
+
+                let llmResponseContent = '';
+                try {
+                  llmResponseContent = await callChatCompletionsAPI_viaLocalProxy(
+                      OPENROUTER_CONFIG,
+                      selectedModel,
+                      messages,
+                      "tool_matching",
+                      toolMatchTemperature,
+                      maxTokens
+                  );
+                  // Debug: log the raw LLM response
+                  console.log('Raw LLM response:', llmResponseContent);
+                } catch (err) {
+                  console.error('Error from LLM proxy:', err);
+                  displayMessage('There was an error contacting the LLM service. Please try again later.', 'error', toolResultsArea);
+                  showLoading(false, toolLoadingIndicator, findToolsButton, "Find My Tools with AI");
+                  return;
+                }
+
+                // Try to parse JSON, fallback to user-friendly error if not valid
+                let toolSuggestions = null;
+                let cleanJsonResponse = llmResponseContent.trim();
+                // Remove Markdown code block if present
+                if (cleanJsonResponse.startsWith('```json')) {
+                  cleanJsonResponse = cleanJsonResponse.slice(7).trim();
+                  if (cleanJsonResponse.endsWith('```')) {
+                    cleanJsonResponse = cleanJsonResponse.slice(0, -3).trim();
+                  }
+                } else if (cleanJsonResponse.startsWith('```')) {
+                  cleanJsonResponse = cleanJsonResponse.slice(3).trim();
+                  if (cleanJsonResponse.endsWith('```')) {
+                    cleanJsonResponse = cleanJsonResponse.slice(0, -3).trim();
+                  }
+                }
+                try {
+                  toolSuggestions = JSON.parse(cleanJsonResponse);
+                } catch (err) {
+                  displayMessage('The model did not return results in the expected format. Try a different query or model.', 'error', toolResultsArea);
+                  console.error('Malformed LLM response (not JSON):', llmResponseContent);
+                  showLoading(false, toolLoadingIndicator, findToolsButton, "Find My Tools with AI");
+                  return;
+                }
+
+                // --- Transparency UI ---
+                let transparencyHtml = `
+                  <div class="collapsible-panel collapsed" id="debugCollapsiblePanel">
+                    <div class="collapsible-header" id="debugCollapsibleHeader" tabindex="0" role="button" aria-expanded="false" aria-controls="debugCollapsibleContent">
+                      <span class="collapsible-chevron">&#9654;</span>
+                      How Your Tool Match Was Made
+                    </div>
+                    <div class="collapsible-content" id="debugCollapsibleContent">
+                      <div class='debug-panel' style="margin-bottom:0; box-shadow:none; border:none; background:none;">
+                        <div class='debug-section'><b>1. Your Query:</b><br><span>${problemDescription}</span></div>
+                        <div class='debug-section'><b>2. Enhanced Web Search Prompt Sent to Perplexity:</b><br><pre style='white-space:pre-wrap;'>${optimizedWebSearchQuery}</pre></div>
+                        <div class='debug-section'><b>3. Web Search Result (Perplexity):</b>
+                          <pre style='white-space:pre-wrap;'>${webResults}</pre>
+                        </div>
+                        <div class='debug-section'><b>4. System Prompt Sent to LLM:</b>
+                          <pre style='white-space:pre-wrap;'>${systemPrompt}</pre>
+                        </div>
+                        <div class='debug-section'><b>5. Raw LLM Response:</b>
+                          <pre style='white-space:pre-wrap;'>${llmResponseContent}</pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                toolResultsArea.innerHTML = transparencyHtml;
+                // Add JS for collapsible
+                setTimeout(() => {
+                  const panel = document.getElementById('debugCollapsiblePanel');
+                  const header = document.getElementById('debugCollapsibleHeader');
+                  const content = document.getElementById('debugCollapsibleContent');
+                  if (panel && header && content) {
+                    header.addEventListener('click', () => {
+                      const expanded = panel.classList.toggle('expanded');
+                      panel.classList.toggle('collapsed', !expanded);
+                      header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    });
+                    header.addEventListener('keydown', (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        header.click();
+                      }
+                    });
+                  }
+                }, 0);
+
+                // --- Handle both array and {recommendations:[]} ---
+                let suggestionsArray = [];
+                if (Array.isArray(toolSuggestions)) {
+                  suggestionsArray = toolSuggestions;
+                } else if (
+                  toolSuggestions &&
+                  typeof toolSuggestions === 'object' &&
+                  Array.isArray(toolSuggestions.recommendations)
+                ) {
+                  suggestionsArray = toolSuggestions.recommendations;
+                }
+
+                let augmentedSuggestions = suggestionsArray.map(suggestionFromAI => {
+                    const originalTool = AIToolDatabase.find(dbTool =>
+                    (suggestionFromAI.name && dbTool.name.toLowerCase() === suggestionFromAI.name.toLowerCase()) ||
+                    (suggestionFromAI.id && dbTool.id === suggestionFromAI.id)
+                    );
+                    return {
+                        name: suggestionFromAI.name || (originalTool ? originalTool.name : "Unknown Tool"),
+                    reason: suggestionFromAI.reason || suggestionFromAI.explanation || suggestionFromAI.description || "No specific reason provided by AI.",
+                    link: suggestionFromAI.link || (originalTool ? originalTool.link : '#'),
+                    description: suggestionFromAI.description || (originalTool ? originalTool.description : 'No further description available.'),
+                    sources: suggestionFromAI.sources || []
+                    };
+                });
+
+                // Fallback: if no suggestions, use top 2 internal tools
+                if (augmentedSuggestions.length === 0) {
+                  console.warn('LLM returned no suggestions, using fallback internal tools.');
+                  augmentedSuggestions = AIToolDatabase.slice(0,2).map(tool => ({
+                    name: tool.name,
+                    reason: 'Fallback: Top internal tool.',
+                    link: tool.link,
+                    description: tool.description,
+                    sources: []
+                  }));
+                }
+                displayToolResults(augmentedSuggestions);
+
+            } catch (error) {
+                console.error('Error finding tools (via proxy):', error);
+                displayMessage(`Error finding tools: ${error.message}`, 'error', toolResultsArea);
+            } finally {
+                showLoading(false, toolLoadingIndicator, findToolsButton, "Find My Tools with AI");
+            }
+        }
+
+        // --- Image Generation / Idea Helper Logic ---
+        async function handleImageTask() {
+            const userPrompt = imagePromptDescriptionInput.value.trim();
+            if (!userPrompt) {
+                displayMessage('Please enter an image prompt or concept.', 'error', imageResultsArea);
+                return;
+            }
+
+            const imageModel = imageTaskProviderSelect.value;
+
+            showLoading(true, imageLoadingIndicator, generateImageButton, "Enhancing your image prompt...");
+            imageResultsArea.innerHTML = '';
+
+            try {
+                let finalPrompt = userPrompt;
+                if (imageModel) {
+                    // Enhance the prompt using the LLM (always use OpenRouter for enhancement)
+                    const enhancePrompt = `You are an expert at crafting prompts for AI image generation. Rewrite the following user prompt to always create an award-winning, ultra-realistic, high-resolution photograph that is indistinguishable from a real photo. Always emphasize realism, photographic detail, natural lighting, lifelike textures, authentic composition, and high resolution. Add important visual details, atmosphere, and artistic cues to make the image as beautiful, striking, and realistic as possible. Do not add explanations, just return the improved prompt.`;
+                    const enhanceMessages = [
+                        { role: "system", content: enhancePrompt },
+                        { role: "user", content: userPrompt }
+                    ];
+                    // Use the selected LLM model for enhancement if it's in the LLM list, else default to OpenRouter
+                    const enhanceModel = BEST_FREE_LLM_MODELS.find(m => m.model === imageModel) ? imageModel : OPENROUTER_CONFIG.defaultChatModel;
+                    const temperature = parseFloat(toolTemperatureInput.value);
+                    const enhancedPrompt = await callChatCompletionsAPI_viaLocalProxy(OPENROUTER_CONFIG, enhanceModel, enhanceMessages, "image_prompt_enhance", temperature);
+                    showLoading(true, imageLoadingIndicator, generateImageButton, "Generating your image...");
+                    finalPrompt = (enhancedPrompt || '').replace(/^"|"$/g, '').trim();
+
+                    // Show a process/debug panel for image generation
+                    let processPanelHtml = `
+                      <div class="collapsible-panel collapsed" id="imageDebugCollapsiblePanel">
+                        <div class="collapsible-header" id="imageDebugCollapsibleHeader" tabindex="0" role="button" aria-expanded="false" aria-controls="imageDebugCollapsibleContent">
+                          <span class="collapsible-chevron">&#9654;</span>
+                          How Your Image Was Generated
+                        </div>
+                        <div class="collapsible-content" id="imageDebugCollapsibleContent">
+                          <div class='debug-panel' style="margin-bottom:0; box-shadow:none; border:none; background:none;">
+                            <div class='debug-section'><b>1. Your Prompt:</b><br><span>${userPrompt}</span></div>
+                            <div class='debug-section'><b>2. Enhanced Image Prompt:</b><br><pre style='white-space:pre-wrap;'>${finalPrompt}</pre></div>
+                            <div class='debug-section'><b>3. Image Generation Model Used:</b><br><span>${imageModel}</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    imageResultsArea.innerHTML = processPanelHtml;
+                    // Add JS for collapsible
+                    setTimeout(() => {
+                      const panel = document.getElementById('imageDebugCollapsiblePanel');
+                      const header = document.getElementById('imageDebugCollapsibleHeader');
+                      const content = document.getElementById('imageDebugCollapsibleContent');
+                      if (panel && header && content) {
+                        header.addEventListener('click', () => {
+                          const expanded = panel.classList.toggle('expanded');
+                          panel.classList.toggle('collapsed', !expanded);
+                          header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                        });
+                        header.addEventListener('keydown', (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            header.click();
+                          }
+                        });
+                      }
+                    }, 0);
+                    const imageResult = await callMyQaImageGenerationAPI_viaLocalProxy(finalPrompt, imageModel, 3);
+                    displayGeneratedImage(imageResult, finalPrompt);
+                } else {
+                    displayMessage('Please select an image generation model.', 'error', imageResultsArea);
+                }
+            } catch (error) {
+                console.error('Error in image task (via proxy):', error);
+                displayMessage(`Error during image task: ${error.message}`, 'error', imageResultsArea);
+            } finally {
+                showLoading(false, imageLoadingIndicator, generateImageButton, "Generate");
+            }
+        }
+
+        // --- UI Update Functions ---
+        function showLoading(isLoading, indicatorElement, buttonElement, buttonTextLoading) {
+            const originalButtonText = buttonElement.id === 'findToolsButton' ? 'Find My Tools with AI' : 'Generate';
+            if (isLoading) {
+                indicatorElement.style.display = 'block';
+                buttonElement.disabled = true;
+                // Show a more descriptive loading label
+                if (indicatorElement.querySelector('p')) {
+                    indicatorElement.querySelector('p').textContent = buttonTextLoading;
+                }
+                buttonElement.textContent = buttonTextLoading;
+            } else {
+                indicatorElement.style.display = 'none';
+                buttonElement.disabled = false;
+                buttonElement.textContent = originalButtonText;
+            }
+        }
+
+        function displayToolResults(suggestions) {
+            // Do not clear toolResultsArea; append results below the debug/process panel
+            // Remove any previous results container
+            const oldResults = toolResultsArea.querySelector('.tool-results-container');
+            if (oldResults) oldResults.remove();
+            if (!suggestions || suggestions.length === 0) {
+                displayMessage('AI couldn\'t find matching tools for your query, or the response was empty. Try rephrasing or check if the LLM is working.', 'info', toolResultsArea);
+                return;
+            }
+            const resultsContainer = document.createElement('div');
+            resultsContainer.classList.add('tool-results-container');
+            const title = document.createElement('h3');
+            title.classList.add('results-title');
+            title.textContent = 'Suggested AI Tools:';
+            resultsContainer.appendChild(title);
+            suggestions.forEach(tool => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('tool-item');
+                itemDiv.innerHTML = `
+                    <h3>${tool.name}</h3>
+                    <p><strong>Reason:</strong> ${tool.reason || tool.explanation || '<em>No explanation provided by the AI. This may be due to incomplete LLM output.</em>'}</p>
+                    ${tool.description && tool.description !== 'No further description available.' ? `<p><em>Description:</em> ${tool.description}</p>` : ''}
+                    <a href="${tool.link}" class="tool-link" target="_blank" rel="noopener noreferrer">Visit Tool</a>
+                `;
+                // 4. Display the citations if present
+                if(tool.sources && tool.sources.length > 0){
+                  const srcHtml = tool.sources.map(s => 
+                    `<a href="${s.link}" target="_blank" rel="noopener">${s.id}</a>`).join(' ');
+                  itemDiv.innerHTML += `<p><small>Sources: ${srcHtml}</small></p>`;
+                }
+                resultsContainer.appendChild(itemDiv);
+            });
+            // If only one tool is found, add a note
+            if (suggestions.length === 1) {
+                const note = document.createElement('div');
+                note.className = 'info-message';
+                note.style.marginTop = '12px';
+                note.textContent = 'Only one tool was found. Try a broader or different query for more options.';
+                resultsContainer.appendChild(note);
+            }
+            toolResultsArea.appendChild(resultsContainer);
+        }
+
+        function displayGeneratedImage(imageResult, originalPrompt) {
+            // Do NOT clear imageResultsArea; append below the enhanced prompt panel
+            const container = document.createElement('div');
+            container.classList.add('image-result-container');
+
+            const imgElement = document.createElement('img');
+            if (imageResult.type === 'url') {
+                imgElement.src = imageResult.data;
+            } else if (imageResult.type === 'base64') {
+                const mimeType = imageResult.mimeType || 'image/png';
+                imgElement.src = `data:${mimeType};base64,${imageResult.data}`;
+            } else {
+                displayMessage('Could not display image. Unknown image data type received.', 'error', imageResultsArea);
+                return;
+            }
+            imgElement.alt = `AI Generated Image for: ${originalPrompt}`;
+            imgElement.onerror = () => {
+                console.error(`Error loading image from ${imageResult.type === 'url' ? imageResult.data : 'base64 source'}`);
+                displayMessage('Error loading the generated image. The URL might be invalid, expired, or the data corrupted.', 'error', imageResultsArea);
+                imgElement.remove();
+            };
+            container.appendChild(imgElement);
+
+            imageResultsArea.appendChild(container);
+        }
+
+        function displayTextIdeasForImages(ideasText, originalPrompt) {
+            imageResultsArea.innerHTML = '';
+            if (!ideasText || ideasText.trim() === "") {
+                displayMessage('AI could not generate image ideas for this concept. Try a different one.', 'info', imageResultsArea);
+                return;
+            }
+            const title = document.createElement('h3');
+            title.classList.add('results-title');
+            title.textContent = `Generated Text Ideas for Image: "${originalPrompt}"`;
+            imageResultsArea.appendChild(title);
+
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('image-idea-item');
+
+            // Split by newline, filter empty lines, trim, and remove potential leading hyphens/bullets
+            const ideasList = ideasText.split('\n')
+                                .map(line => line.trim())
+                                .filter(line => line !== "")
+                                .map(line => line.replace(/^[\-\*\u2022\s]+/, '')); // Remove leading hyphens, asterisks, bullets and spaces
+
+            if (ideasList.length > 0) {
+                const ul = document.createElement('ul');
+                ideasList.forEach(idea => {
+                    if (idea.trim()) { // Ensure idea is not just whitespace after cleaning
+                        const li = document.createElement('li');
+                        li.textContent = idea;
+                        ul.appendChild(li);
+                    }
+                });
+                if (ul.children.length > 0) {
+                    itemDiv.appendChild(ul);
+                } else { // If all lines were e.g. just "-"
+                     itemDiv.innerHTML = `<p>${ideasText.replace(/\n/g, '<br>')}</p>`;
+                }
+            } else {
+                 itemDiv.innerHTML = `<p>${ideasText.replace(/\n/g, '<br>')}</p>`; // Fallback if no list items parsed
+            }
+            imageResultsArea.appendChild(itemDiv);
+        }
+
+        function displayMessage(message, type = 'info', targetArea) {
+            // Clear previous messages/results in this specific area before showing a new one
+            if (targetArea) { // Ensure targetArea is valid
+                 targetArea.innerHTML = '';
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', type === 'error' ? 'error-message' : 'info-message');
+                messageDiv.textContent = message;
+                targetArea.appendChild(messageDiv);
+            } else {
+                console.warn("displayMessage called with no targetArea for message:", message);
+            }
+        }
+
+        // --- Model Lists ---
+        const BEST_FREE_LLM_MODELS = [
+          {
+            model: "mistralai/mistral-7b-instruct:free",
+            description: "Fast, instruction-tuned for clear, concise answers."
+          },
+          {
+            model: "qwen/qwen3-4b:free",
+            description: "Lightweight and efficient for simple queries."
+          },
+          {
+            model: "google/gemini-2.0-flash-001",
+            description: "Google Gemini 2.0 Flash (paid): advanced, fast, and capable for a wide range of tasks."
+          },
+          {
+            model: "perplexity/r1-1776",
+            description: "Perplexity R1-1776: advanced, general-purpose LLM from Perplexity, strong for reasoning and research (may require API key or credits)."
+          }
+        ];
+
+        const BEST_FREE_IMAGE_MODELS = [
+          { model: "stabilityai/sdxl-turbo:free", description: "Stable Diffusion XL Turbo: fast, high-quality, photorealistic images." },
+          { model: "stabilityai/sdxl-turbo", description: "Stable Diffusion XL Turbo (non-free): fast, high-quality, photorealistic images (may require credits or API key)." },
+          { model: "black-forest-labs/FLUX-1-schnell:free", description: "FLUX-1 Schnell: quick, creative, and free image generation." },
+          { model: "google/gemini-2.0-flash-exp:free", description: "Google Gemini 2.0 Flash: experimental, supports text & image tasks." },
+          { model: "openai/gpt-image-1", description: "OpenAI GPT-Image 1: advanced, high-fidelity image generation with strong text-to-image understanding (may require API key or credits)." }
+        ];
+
+        // --- Populate Model Dropdowns ---
+        function populateModelDropdown(selectEl, models, defaultModel) {
+          selectEl.innerHTML = '';
+          models.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.model;
+            opt.textContent = `${m.model} — ${m.description}`;
+            if (m.model === defaultModel) opt.selected = true;
+            selectEl.appendChild(opt);
+          });
+        }
+
+        // --- On page load, populate model dropdowns ---
+        document.addEventListener('DOMContentLoaded', () => {
+          const llmModelSelect = document.getElementById('toolLlmpModel');
+          const imageModelSelect = document.getElementById('imageTaskProvider');
+          populateModelDropdown(llmModelSelect, BEST_FREE_LLM_MODELS, OPENROUTER_CONFIG.defaultChatModel);
+          populateModelDropdown(imageModelSelect, BEST_FREE_IMAGE_MODELS, MYQA_CONFIG.imageGenModel);
+        });
+
+    </script>
+</body>
+</html>
